@@ -13,9 +13,9 @@ metadata:
 spec:
   source:
     git:
-      url: https://github.com/bmoussaud/micropets-app/
+      url: https://github.com/bmoussaud/micropets-cats-golang
       ref:
-        branch: master
+        branch: main
     subPath: cats
   serviceClaims:
     - name: app-config
