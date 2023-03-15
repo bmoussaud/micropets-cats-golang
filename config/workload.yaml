@@ -16,7 +16,6 @@ spec:
       url: https://github.com/bmoussaud/micropets-cats-golang
       ref:
         branch: main
-    subPath: cats
   serviceClaims:
     - name: app-config
       ref:
