@@ -6,6 +6,7 @@ metadata:
   tags:
     - service
     - golang  
+    - v2
   annotations:
     'backstage.io/kubernetes-label-selector': 'app.kubernetes.io/name=cats'
     'github.com/project-slug': 'bmoussaud/micropets-app/cats'    
