@@ -8,8 +8,8 @@ metadata:
     - golang  
   annotations:
     'backstage.io/kubernetes-label-selector': 'app.kubernetes.io/name=cats'
-    'github.com/project-slug': 'bmoussaud/micropets-app/cats'
-    'backstage.io/techdocs-ref': dir:.
+    'github.com/project-slug': 'bmoussaud/micropets-app/cats'    
+    backstage.io/techdocs-ref: dir:docs
 spec:
   type: service
   lifecycle: experimental
