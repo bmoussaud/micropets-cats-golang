@@ -66,8 +66,8 @@ docker-hub-push: docker-build
 	docker push $(DOCKER_HUB_IMAGE)
 	docker push $(DOCKER_HUB_IMAGE_DEV)
 
-docker-run: 
-	docker run --rm  --name $(BINARY_NAME)  -v $(ROOT_DIR):/config  -p 7002:7002 $(LOCAL_DOCKER_IMAGE)
+docker-run: cnb-image
+	docker run --rm  --name $(BINARY_NAME) -e MP_OBSERVABILITY.ENABLE=false -e MP_OBSERVABILITY.TOKEN=$(TO_TOKEN)  -v $(ROOT_DIR):/home/cnb/.micropets  -p 7002:7002 $(LOCAL_DOCKER_IMAGE)
 
 cnb-image:
 	pack build $(LOCAL_DOCKER_IMAGE) --buildpack gcr.io/paketo-buildpacks/go --builder paketobuildpacks/builder:base

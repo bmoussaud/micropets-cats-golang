@@ -207,6 +207,10 @@ func Start() {
 	fmt.Printf("******* Starting to the cats service on port %s, mode %s\n", config.Service.Port, config.Service.Mode)
 	fmt.Printf("******* Delay Period %d Amplitude %f shift %d \n", config.Service.Delay.Period, config.Service.Delay.Amplitude, shift)
 	fmt.Printf("******* Frequency Error %d\n", config.Service.FrequencyError)
+	if config.Observability.Enable {
+		fmt.Printf("******* Observability URL   is %s\n", config.Observability.Server)
+		fmt.Printf("******* Observability TOKEN is %s\n", config.Observability.Token)
+	}
 
 	log.Fatal(http.ListenAndServe(config.Service.Port, logRequest(http.DefaultServeMux)))
 }

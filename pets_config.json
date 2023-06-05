@@ -13,10 +13,10 @@
   "observability": {
     "enable": false,
     "application": "micropets",
-    "service": "pets",
+    "service": "cats",
     "cluster": "us-west",
     "shard": "primary",
-    "server": "xxxx.wavefront.com",
-    "token": "x-y-z-y"
+    "server": "https://binz.wavefront.com",
+    "token": "xxxxxx-zzzzz-xxxx-fsdfsd-dqsdq"
   }
 }
