@@ -1,0 +1,21 @@
+#https://raw.githubusercontent.com/wavefrontHQ/observability-for-kubernetes/main/deploy/scenarios/wavefront-proxy-otlp.yaml
+## Need to change YOUR_CLUSTER_NAME and YOUR_WAVEFRONT_URL accordingly
+apiVersion: wavefront.com/v1alpha1
+kind: Wavefront
+metadata:
+  name: wavefront
+  namespace: observability-system
+spec:
+  clusterName: aks-eu-tap-5
+  wavefrontUrl: https://binz.wavefront.com
+  dataCollection:
+    metrics:
+      enable: true
+  dataExport:
+    wavefrontProxy:
+      enable: true
+      otlp:
+        grpcPort: 4317
+        httpPort: 4318
+        resourceAttrsOnMetricsIncluded: true
+
