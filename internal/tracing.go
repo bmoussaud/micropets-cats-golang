@@ -1,81 +1,78 @@
 package internal
 
 import (
+	"context"
+	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 
-	"github.com/wavefronthq/wavefront-sdk-go/application"
-	"github.com/wavefronthq/wavefront-sdk-go/senders"
+	"log"
 
-	"github.com/wavefronthq/wavefront-opentracing-sdk-go/reporter"
-	wfTracer "github.com/wavefronthq/wavefront-opentracing-sdk-go/tracer"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 
-	"github.com/opentracing/opentracing-go"
-	otrext "github.com/opentracing/opentracing-go/ext"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
-func NewGlobalTracer() io.Closer {
+func initTracerAuto() func(context.Context) error {
+	fmt.Printf("initTracerAuto//////////////////\n")
+	exporter, err := otlptrace.New(
+		context.Background(),
+		otlptracegrpc.NewClient(
+			otlptracegrpc.WithInsecure(),
+			otlptracegrpc.WithEndpoint("wavefront-proxy.observability-system.svc.cluster.local:4317"),
+		),
+	)
 
-	var sender senders.Sender
-	var err error
-
-	ObservabilityConfig := LoadConfiguration().Observability
-	if ObservabilityConfig.Enable {
-
-		if ObservabilityConfig.Server != "" && ObservabilityConfig.Token != "" {
-			config := &senders.DirectConfiguration{
-				Server: ObservabilityConfig.Server,
-				Token:  ObservabilityConfig.Token,
-			}
-			sender, err = senders.NewDirectSender(config)
-			if err != nil {
-				log.Fatalf("error creating wavefront sender: %q", err)
-			}
-
-			log.Printf("* Enabled Observability %s \n", ObservabilityConfig.Server)
-
-		} else {
-			log.Fatalf("Not enough configuration parameter has been specified for sender.")
-		}
-
-		appTags := application.New(ObservabilityConfig.Application, ObservabilityConfig.Service)
-		log.Printf("* Enabled Observability new Application  %s/%s \n", ObservabilityConfig.Application, ObservabilityConfig.Service)
-		log.Printf("* Enabled Observability on Cluster  %s/%s \n", ObservabilityConfig.Cluster, ObservabilityConfig.Shard)
-
-		appTags.Cluster = ObservabilityConfig.Cluster
-		appTags.Shard = ObservabilityConfig.Shard
-
-		var spanReporter reporter.WavefrontSpanReporter
-		if ObservabilityConfig.Source != "" {
-			spanReporter = reporter.New(sender, appTags, reporter.Source(ObservabilityConfig.Source))
-		} else {
-			spanReporter = reporter.New(sender, appTags)
-			log.Printf("* Enabled Observability with default span reporter")
-		}
-
-		consoleReporter := reporter.NewConsoleSpanReporter(ObservabilityConfig.Service)
-		compositeReporter := reporter.NewCompositeSpanReporter(spanReporter, consoleReporter)
-		wavefrontTracer := wfTracer.New(compositeReporter)
-		opentracing.SetGlobalTracer(wavefrontTracer)
-
+	if err != nil {
+		log.Fatal("Could not set exporter: ", err)
 	}
+
+	fmt.Printf("exporter %+v\n", exporter)
+
+	resources, err := resource.New(
+		context.Background(),
+		resource.WithAttributes(
+			attribute.String("service.name", LoadConfiguration().Observability.Service),
+			attribute.String("application", LoadConfiguration().Observability.Application),
+		),
+	)
+	fmt.Printf("resources %+v\n", resources)
+	if err != nil {
+		log.Fatal("Could not set resources: ", err)
+	}
+
+	otel.SetTracerProvider(
+		sdktrace.NewTracerProvider(
+			sdktrace.WithSampler(sdktrace.AlwaysSample()),
+			sdktrace.WithSpanProcessor(sdktrace.NewBatchSpanProcessor(exporter)),
+			sdktrace.WithSyncer(exporter),
+			sdktrace.WithResource(resources),
+		),
+	)
+
+	return exporter.Shutdown
+}
+
+func NewGlobalTracer() io.Closer {
+	fmt.Printf("NewGlobalTracer//////////////////\n")
+	cleanup := initTracerAuto()
+	defer cleanup(context.Background())
+
 	return ioutil.NopCloser(nil)
 
 }
 
-func NewServerSpan(req *http.Request, spanName string) opentracing.Span {
-	tracer := opentracing.GlobalTracer()
-	parentCtx, err := tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-	var span opentracing.Span
-	if err == nil { // has parent context
-		span = tracer.StartSpan(spanName, opentracing.ChildOf(parentCtx))
-	} else if err == opentracing.ErrSpanContextNotFound { // no parent
-		span = tracer.StartSpan(spanName)
-	} else {
-		log.Printf("Error in extracting tracer context: %s", err.Error())
-	}
-	otrext.SpanKindRPCServer.Set(span)
-	return span
+func NewServerSpan(req *http.Request, spanName string) io.Closer {
+
+	return ioutil.NopCloser(nil)
+}
+
+func NewTrace(ctx context.Context, traceName string) {
+	_, span := otel.Tracer(traceName).Start(ctx, "Run")
+	defer span.End()
 }

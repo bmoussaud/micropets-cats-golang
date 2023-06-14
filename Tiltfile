@@ -13,7 +13,7 @@ local_resource(
 
 allow_k8s_contexts('aks-eu-tap-5')
 
-k8s_yaml(["config/serviceclaims-aria.yaml"])
+ 
 
 k8s_custom_deploy(
     'cats',

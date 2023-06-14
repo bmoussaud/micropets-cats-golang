@@ -14,8 +14,12 @@ spec:
   dataExport:
     wavefrontProxy:
       enable: true
+      tracing:
+        wavefront:
+          port: 30000
+          samplingRate: "1.0"
+          samplingDuration: 100
       otlp:
         grpcPort: 4317
         httpPort: 4318
         resourceAttrsOnMetricsIncluded: true
-

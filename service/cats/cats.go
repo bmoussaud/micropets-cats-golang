@@ -1,20 +1,18 @@
 package cats
 
 import (
-	"encoding/json"
 	"fmt"
-	"log"
+
 	"math"
 	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"time"
 
-	otrext "github.com/opentracing/opentracing-go/ext"
-	otrlog "github.com/opentracing/opentracing-go/log"
+	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 
 	. "moussaud.org/cats/internal"
 )
@@ -41,10 +39,12 @@ var calls = 0
 
 var shift = 0
 
-func setupResponse(w *http.ResponseWriter, req *http.Request) {
-	(*w).Header().Set("Access-Control-Allow-Origin", "*")
-	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+func setupResponse(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
+
 }
 
 func db() Cats {
@@ -65,8 +65,10 @@ func db() Cats {
 }
 
 func db_authentication(r *http.Request) {
-	span := NewServerSpan(r, "db_authentication")
-	defer span.Finish()
+	//span := NewServerSpan(r, "db_authentication")
+	//defer span.Finish()
+
+	NewTrace(r.Context(), "db_authentication")
 
 	if GlobalConfig.Service.Delay.Period > 0 {
 		y := float64(calls+shift) * math.Pi / float64(2*GlobalConfig.Service.Delay.Period)
@@ -81,47 +83,41 @@ func db_authentication(r *http.Request) {
 	}
 }
 
-func single(w http.ResponseWriter, r *http.Request) {
+func single(c *gin.Context) {
 
-	span := NewServerSpan(r, "single")
-	defer span.Finish()
-
-	setupResponse(&w, r)
+	setupResponse(c)
 	time.Sleep(time.Duration(10) * time.Millisecond)
 
-	db_authentication(r)
+	db_authentication(c.Request)
+
 	cats := db()
 
-	re := regexp.MustCompile(`/`)
-	submatchall := re.Split(r.URL.Path, -1)
-	id, _ := strconv.Atoi(submatchall[4])
+	strId := c.Param("id")
+	id, err := strconv.Atoi(strId)
 
+	if err != nil {
+		fmt.Println("Error during conversion")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error during conversion %s", strId)})
+		return
+	}
+
+	fmt.Printf("ID %d", id)
 	if id >= len(cats.Cats) {
-		http.Error(w, fmt.Sprintf("invalid index %d", id), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("invalid index %d", id)})
 	} else {
 		element := cats.Cats[id]
 		element.From = GlobalConfig.Service.From
 		fmt.Println(element)
-		w.Header().Set("Content-Type", "application/json")
-		js, err := json.Marshal(element)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		w.Write(js)
+		c.IndentedJSON(http.StatusOK, element)
 	}
 }
 
-func index(w http.ResponseWriter, r *http.Request) {
+func index(c *gin.Context) {
 
-	fmt.Printf("%s", r.Method)
-	span := NewServerSpan(r, "index")
-	defer span.Finish()
-
-	setupResponse(&w, r)
+	setupResponse(c)
 	time.Sleep(time.Duration(10) * time.Millisecond)
 
-	db_authentication(r)
+	db_authentication(c.Request)
 
 	cats := db()
 
@@ -141,17 +137,12 @@ func index(w http.ResponseWriter, r *http.Request) {
 
 	if GlobalConfig.Service.FrequencyError > 0 && calls%GlobalConfig.Service.FrequencyError == 0 {
 		fmt.Printf("Fails this call (%d)", calls)
-		otrext.Error.Set(span, true)
-		span.LogFields(otrlog.String("error.kind", "Unexpected Error when querying the cats repository"))
-		http.Error(w, "Unexpected Error when querying the cats repository", http.StatusServiceUnavailable)
+		//otrext.Error.Set(span, true)
+		//span.LogFields(otrlog.String("error.kind", "Unexpected Error when querying the cats repository"))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unexpected Error when querying the cats repository"})
+
 	} else {
-		w.Header().Set("Content-Type", "application/json")
-		js, err := json.Marshal(cats)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		w.Write(js)
+		c.IndentedJSON(http.StatusOK, cats)
 	}
 }
 
@@ -170,34 +161,30 @@ func GetLocation(file string) string {
 	}
 }
 
-func readiness_and_liveness(w http.ResponseWriter, r *http.Request) {
-	span := NewServerSpan(r, "readiness_and_liveness")
-	defer span.Finish()
-
-	w.WriteHeader(200)
-	w.Write([]byte("ok"))
-}
-
-func logRequest(handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("%s %s %s\n", r.RemoteAddr, r.Method, r.URL)
-		handler.ServeHTTP(w, r)
-	})
+func readiness_and_liveness(c *gin.Context) {
+	//span := NewServerSpan(r, "readiness_and_liveness")
+	//defer span.Finish()
+	//defer span.Finish()
+	//NewTrace(r.Context(), "readiness_and_liveness")
+	c.String(http.StatusOK, "OK\n")
 }
 
 func Start() {
 	config := LoadConfiguration()
 
-	http.HandleFunc("/cats/v1/data", index)
-	http.HandleFunc("/cats/v1/data/", single)
+	r := gin.Default()
+	r.Use(otelgin.Middleware("otel-otlp-go-service"))
 
-	http.HandleFunc("/cats/liveness", readiness_and_liveness)
-	http.HandleFunc("/cats/readiness", readiness_and_liveness)
+	r.GET("/cats/v1/data", index)
+	r.GET("/cats/v1/data/:id", single)
 
-	http.HandleFunc("/liveness", readiness_and_liveness)
-	http.HandleFunc("/readiness", readiness_and_liveness)
+	r.GET("/cats/liveness", readiness_and_liveness)
+	r.GET("/cats/readiness", readiness_and_liveness)
 
-	http.HandleFunc("/", index)
+	r.GET("/liveness", readiness_and_liveness)
+	r.GET("/readiness", readiness_and_liveness)
+
+	r.GET("/", index)
 
 	rand.Seed(time.Now().UnixNano())
 	shift = rand.Intn(100)
@@ -205,5 +192,6 @@ func Start() {
 	fmt.Printf("******* Starting to the cats service on port %s, mode %s\n", config.Service.Port, config.Service.Mode)
 	fmt.Printf("******* Delay Period %d Amplitude %f shift %d \n", config.Service.Delay.Period, config.Service.Delay.Amplitude, shift)
 	fmt.Printf("******* Frequency Error %d\n", config.Service.FrequencyError)
-	log.Fatal(http.ListenAndServe(config.Service.Port, logRequest(http.DefaultServeMux)))
+
+	r.Run(config.Service.Port)
 }

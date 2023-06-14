@@ -29,8 +29,8 @@ DOCKER_HUB_IMAGE_DEV=bmoussaud/micropet_$(BINARY_NAME):dev
 
 
 #local build
-build: deps
-	GO111MODULE=auto $(GOBUILD) -o $(BINARY_NAME) -v main.go
+build: 	
+	CGO_ENABLED=0 $(GOBUILD) -o build/$(BINARY_NAME) -buildmode pie -trimpath ./cmd/cats
 
 test:
 	$(GOTEST) -v ./...
@@ -107,8 +107,8 @@ undeliverable:
 	kubectl delete Deliverable $(BINARY_NAME) -n $(MICROPETS_NS)
 
 load:
-	vegeta attack -targets=targets.txt -name=300qps -rate=300 -duration=15s > results.300qps.bin
-	cat results.300qps.bin | vegeta plot > plot.300qps.html
+	echo "GET https://cats-golang.micropets-dev.tap5.eu.aks.mytanzu.xyz" | vegeta attack -insecure -name=pets -rate=2 -duration=5s  | vegeta report
+
 
 k8s-deploy:
 	kubectl delete -k k8s
