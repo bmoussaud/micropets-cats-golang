@@ -10,3 +10,4 @@ kapp
 k8s
 kustomize
 build
+vendor/

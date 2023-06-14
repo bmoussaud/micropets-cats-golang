@@ -29,8 +29,8 @@ DOCKER_HUB_IMAGE_DEV=bmoussaud/micropet_$(BINARY_NAME):dev
 
 
 #local build
-build: deps
-	GO111MODULE=auto $(GOBUILD) -o $(BINARY_NAME) -v main.go
+build: 
+	CGO_ENABLED=0 $(GOBUILD) -o build/$(BINARY_NAME) -buildmode pie -trimpath ./cmd/cats
 
 test:
 	$(GOTEST) -v ./...
