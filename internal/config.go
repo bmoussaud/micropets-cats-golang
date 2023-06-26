@@ -2,10 +2,13 @@ package internal
 
 import (
 	"fmt"
+	"strings"
 
 	"os"
 
 	"github.com/spf13/viper"
+
+	"github.com/baijum/servicebinding/binding"
 )
 
 // Config Structure
@@ -49,7 +52,22 @@ func LoadConfiguration() Config {
 			fmt.Printf("Load configuration from %s/app-config....\n", serviceConfigDir)
 			viper.AddConfigPath(serviceConfigDir + "/app-config")
 
+			fmt.Printf("Load overidden configuration from %s/app-configuration-aria....\n", serviceConfigDir)
+			sb, _ := binding.NewServiceBinding()
+			bindings, _ := sb.Bindings("app-configuration-aria")
+
+			if len(bindings) == 1 {
+				for key, element := range bindings[0] {
+					if key == "type" {
+						continue
+					}
+					newKey := strings.ToUpper(fmt.Sprintf("mp_%s", key))
+					fmt.Println("Set Env Key:", newKey, "=>", "Element:", element)
+					os.Setenv(newKey, element)
+				}
+			}
 		}
+
 		//add default config path
 		viper.AddConfigPath("/etc/micropets/")  // path to look for the config file in
 		viper.AddConfigPath("$HOME/.micropets") // call multiple times to add many search paths
@@ -62,7 +80,7 @@ func LoadConfiguration() Config {
 			GlobalConfig.Service.Listen = true
 			GlobalConfig.Service.Mode = "RANDOM_NUMBER"
 		} else {
-			fmt.Printf("config file found \n")
+			fmt.Printf("Config file found \n")
 			err = viper.Unmarshal(&GlobalConfig)
 			if err != nil {
 				panic(fmt.Errorf("unable to decode into struct, %v", err))

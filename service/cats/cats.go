@@ -73,11 +73,11 @@ func db_authentication(r *http.Request) {
 		sin_y := math.Sin(y)
 		abs_y := math.Abs(sin_y)
 		sleep := int(abs_y * GlobalConfig.Service.Delay.Amplitude * 1000.0)
-		fmt.Printf("waitTime %d - %f - %f - %f  -> sleep %d ms  \n", calls, y, math.Sin(y), abs_y, sleep)
-		start := time.Now()
+		//fmt.Printf("waitTime %d - %f - %f - %f  -> sleep %d ms  \n", calls, y, math.Sin(y), abs_y, sleep)
+		//start := time.Now()
 		time.Sleep(time.Duration(sleep) * time.Millisecond)
-		elapsed := time.Since(start)
-		fmt.Printf("Current Unix Time: %s\n", elapsed)
+		//elapsed := time.Since(start)
+		//fmt.Printf("Current Unix Time: %s\n", elapsed)
 	}
 }
 
@@ -114,7 +114,7 @@ func single(w http.ResponseWriter, r *http.Request) {
 
 func index(w http.ResponseWriter, r *http.Request) {
 
-	fmt.Printf("%s", r.Method)
+	//fmt.Printf("%s", r.Method)
 	span := NewServerSpan(r, "index")
 	defer span.Finish()
 
@@ -180,7 +180,7 @@ func readiness_and_liveness(w http.ResponseWriter, r *http.Request) {
 
 func logRequest(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("%s %s %s\n", r.RemoteAddr, r.Method, r.URL)
+		//fmt.Printf("%s %s %s\n", r.RemoteAddr, r.Method, r.URL)
 		handler.ServeHTTP(w, r)
 	})
 }

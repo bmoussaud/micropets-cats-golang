@@ -38,6 +38,7 @@ clean:
 	$(GOCLEAN)
 	rm -f $(BINARY_NAME)
 	rm -f $(BINARY_WINDOWS)
+	rm -rf build
 
 run:
 	$(GOBUILD) -o $(BINARY_NAME) -v main.go
@@ -46,6 +47,7 @@ run:
 deps:
 	GO111MODULE=auto $(GOGET) github.com/kelseyhightower/envconfig
 	GO111MODULE=auto $(GOGET) github.com/magiconair/properties
+	GO111MODULE=auto $(GOGET) github.com/baijum/servicebinding
 
 # Cross compilation
 build-windows:
