@@ -9,10 +9,7 @@ require (
 	github.com/wavefronthq/wavefront-sdk-go v0.9.8
 )
 
-require github.com/kelseyhightower/envconfig v1.4.0 // indirect
-
 require (
-	github.com/baijum/servicebinding v0.1.0
 	github.com/caio/go-tdigest v3.1.0+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect

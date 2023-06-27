@@ -23,12 +23,7 @@ spec:
       ref:
         apiVersion: v1
         kind: Secret
-        name: cats-config
-    - name: app-config-aria
-      ref:
-        apiVersion: v1
-        kind: Secret
-        name: aria-credentials
+        name: cats-config    
   params:
     - name: testing_pipeline_matching_labels
       value:

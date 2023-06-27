@@ -2,13 +2,10 @@ package internal
 
 import (
 	"fmt"
-	"strings"
 
 	"os"
 
 	"github.com/spf13/viper"
-
-	"github.com/baijum/servicebinding/binding"
 )
 
 // Config Structure
@@ -51,21 +48,6 @@ func LoadConfiguration() Config {
 		if serviceConfigDir := os.Getenv("SERVICE_BINDING_ROOT"); serviceConfigDir != "" {
 			fmt.Printf("Load configuration from %s/app-config....\n", serviceConfigDir)
 			viper.AddConfigPath(serviceConfigDir + "/app-config")
-
-			fmt.Printf("Load overidden configuration from %s/app-configuration-aria....\n", serviceConfigDir)
-			sb, _ := binding.NewServiceBinding()
-			bindings, _ := sb.Bindings("app-configuration-aria")
-
-			for _, binding := range bindings {
-				for key, element := range binding {
-					if key == "type" {
-						continue
-					}
-					newKey := strings.ToUpper(fmt.Sprintf("mp_%s", key))
-					fmt.Println("Set Env Key:", newKey, "=>", "Element:", element)
-					os.Setenv(newKey, element)
-				}
-			}
 		}
 
 		//add default config path

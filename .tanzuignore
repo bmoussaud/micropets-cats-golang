@@ -10,4 +10,8 @@ kapp
 k8s
 kustomize
 build
+build/
+vendor
 vendor/
+results.300qps.bin
+plot.300qps.html
