@@ -56,8 +56,8 @@ func LoadConfiguration() Config {
 			sb, _ := binding.NewServiceBinding()
 			bindings, _ := sb.Bindings("app-configuration-aria")
 
-			if len(bindings) == 1 {
-				for key, element := range bindings[0] {
+			for _, binding := range bindings {
+				for key, element := range binding {
 					if key == "type" {
 						continue
 					}
