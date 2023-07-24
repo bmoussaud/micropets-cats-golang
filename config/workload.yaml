@@ -13,6 +13,7 @@ metadata:
   annotations:
     autoscaling.knative.dev/minScale: "1"
 spec:
+  #serviceAccountName: workload-sa
   source:
     git:
       url: https://github.com/bmoussaud/micropets-cats-golang
@@ -23,11 +24,12 @@ spec:
       ref:
         apiVersion: v1
         kind: Secret
-        name: cats-config    
+        name: cats-config
   params:
     - name: testing_pipeline_matching_labels
       value:
         apps.tanzu.vmware.com/pipeline: test-golang
     - name: gitops_commit_message
       value: cats dev supplychain@cluster.local
-    
+    #- name: serviceAccount
+    #  value: workload-sa
