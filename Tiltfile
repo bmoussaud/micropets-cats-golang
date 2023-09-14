@@ -3,6 +3,8 @@ NAMESPACE = os.getenv("NAMESPACE", default='micropets-dev')
 
 compile_cmd = 'CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/cats -buildmode pie -trimpath ./cmd/cats/main.go'
 
+k8s_yaml(["config/application-configuration.yaml"])
+
 local_resource(
   'go-build',
   compile_cmd,

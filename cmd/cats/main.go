@@ -6,7 +6,6 @@ import (
 	. "moussaud.org/cats/internal"
 )
 
-// main
 func main() {
 	LoadConfiguration()
 	NewGlobalTracer()
