@@ -109,6 +109,16 @@ func single(c *gin.Context) {
 	}
 }
 
+func configService(c *gin.Context) {
+
+	setupResponse(c)
+	c.IndentedJSON(200, gin.H{
+		"datasource.url":    "Memory",
+		"kind":              "cats",
+		"datasource.driver": "Memory",
+	})
+}
+
 func index(c *gin.Context) {
 
 	setupResponse(c)
@@ -178,6 +188,7 @@ func Start() {
 
 	r := gin.Default()
 
+	r.GET("/cats/v1/config", configService)
 	r.GET("/cats/v1/data", index)
 	r.GET("/cats/v1/data/:id", single)
 
