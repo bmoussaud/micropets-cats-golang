@@ -112,10 +112,18 @@ func single(c *gin.Context) {
 func configService(c *gin.Context) {
 
 	setupResponse(c)
+
+	host, err := os.Hostname()
+
+	if err != nil {
+		host = "Unknown"
+	}
+
 	c.IndentedJSON(200, gin.H{
 		"datasource.url":    "Memory",
 		"kind":              "cats",
 		"datasource.driver": "Memory",
+		"hostname":          host,
 	})
 }
 
