@@ -120,10 +120,10 @@ func configService(c *gin.Context) {
 	}
 
 	c.IndentedJSON(200, gin.H{
-		"datasource.url":    "Memory",
-		"kind":              "cats",
-		"datasource.driver": "Memory",
-		"hostname":          host,
+		"url":      "Memory",
+		"kind":     "cats",
+		"driver":   "Memory",
+		"hostname": host,
 	})
 }
 
