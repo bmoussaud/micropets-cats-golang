@@ -208,7 +208,7 @@ func Start() {
 
 	r.GET("/", index)
 
-	rand.Seed(time.Now().UnixNano())
+	//rand.Seed(time.Now().UnixNano())
 	shift = rand.Intn(100)
 
 	fmt.Printf("******* Starting to the cats service on port %s, mode %s\n", config.Service.Port, config.Service.Mode)
